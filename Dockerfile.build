@@ -1,0 +1,50 @@
+FROM postgres:9.4.4
+
+RUN true \
+ && apt-get update -y \
+ && apt-get install -yy --no-install-recommends \
+             make g++ postgresql-server-dev-9.4 \
+             wget libaio1 ca-certificates curl unzip \
+             libaio-dev \
+ && apt-get clean -yy \
+ && apt-get autoclean -yy \
+ && apt-get autoremove -yy \
+ && rm -rf /var/cache/debconf/*-old \
+ && rm -rf /var/lib/apt/lists/* \
+ && true
+
+RUN INSTANT_CLIENT_VERSION=11.2.0.4.0 \
+ && cd /tmp \
+ && NAME=basic && wget "https://github.com/FabriZZio/docker-php-oci8/blob/master/oracle/instantclient-$NAME-linux.x64-$INSTANT_CLIENT_VERSION.zip?raw=true" -O $NAME.zip \
+ && NAME=sdk && wget "https://github.com/FabriZZio/docker-php-oci8/blob/master/oracle/instantclient-$NAME-linux.x64-$INSTANT_CLIENT_VERSION.zip?raw=true" -O $NAME.zip \
+ && NAME=sqlplus && wget "https://github.com/FabriZZio/docker-php-oci8/blob/master/oracle/instantclient-$NAME-linux.x64-$INSTANT_CLIENT_VERSION.zip?raw=true" -O $NAME.zip \
+ && unzip /tmp/basic.zip -d /usr/local \
+ && unzip /tmp/sdk.zip -d /usr/local \
+ && unzip /tmp/sqlplus.zip -d /usr/local \
+ && rm -rf /tmp/* \
+ && true
+
+RUN true \
+ && ln -s /usr/local/instantclient_* /usr/local/instantclient \
+ && ln -s /usr/local/instantclient/libclntsh.so.* /usr/local/instantclient/libclntsh.so \
+ && ln -s /usr/local/instantclient/sqlplus /usr/bin/sqlplus \
+ && true
+
+RUN true \
+ && apt-get update -y \
+ && apt-get install -yy --no-install-recommends \
+             ruby-dev rpm ruby-switch \
+ && ruby-switch --set ruby1.9.1 \
+ && apt-get clean -yy \
+ && apt-get autoclean -yy \
+ && apt-get autoremove -yy \
+ && rm -rf /var/cache/debconf/*-old \
+ && rm -rf /var/lib/apt/lists/* \
+ && true
+
+RUN FPM_VERSION=1.3.3 \
+ && gem install --bindir /usr/bin -v ${FPM_VERSION} --no-rdoc --no-ri fpm
+
+ADD builder.sh /builder.sh
+RUN chmod +x /builder.sh
+ENTRYPOINT ["/builder.sh"]
