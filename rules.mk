@@ -10,5 +10,5 @@ check-builder:
 	touch $@;
 
 .dockerbuild: .dockerbuilder | target
-target: $(shell find src -type f) module.mk rules.mk
+target: $(shell find src -type f 2>/dev/null) module.mk rules.mk
 	$(DOCKER) $(DOCKER_OPTS) run -a stdout -a stderr --rm $(NAME)-builder:latest build 1.2.0 | tar xzf -
